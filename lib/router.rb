@@ -16,12 +16,10 @@ class Route
   # use pattern to pull out route params (save for later?)
   # instantiate controller and call controller action
   def run(req, res)
-    new_controller = @controller_class.new
-    new_controller.invoke_action(req.request_method)
-    new_controller.invoke_action(match(req))
-    res.status = 404
+    new_controller = @controller_class.new(req, res)
+    new_controller.invoke_action(@action_name)
   end
-  
+
 end
 
 class Router
@@ -39,6 +37,13 @@ class Router
   # evaluate the proc in the context of the instance
   # for syntactic sugar :)
   def draw(&proc)
+
+    proc.call(router.instance_eval)
+
+    self.instance_eval { proc }
+
+
+
   end
 
   # make each of these methods that
@@ -59,6 +64,7 @@ class Router
 
   # either throw 404 or call run on a matched route
   def run(req, res)
-
+    match(req)
+    res.status = 404
   end
 end
