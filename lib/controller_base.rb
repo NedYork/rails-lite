@@ -3,16 +3,18 @@ require 'active_support/core_ext'
 require 'active_support/inflector'
 require 'erb'
 require_relative './session'
+require_relative './router.rb'
 require 'byebug'
 
 class ControllerBase
   attr_reader :req, :res, :params
 
   # Setup the controller
-  def initialize(req, res)
+  def initialize(req, res, params = {})
+    @params = params
     @req = req
     @res = res
-    @params = params
+    @params.merge(@req.params)
     @already_built_response = false
   end
 
@@ -27,7 +29,7 @@ class ControllerBase
     @already_built_response = true
     res.header["location"] = url
     res.status = 302
-    @session.store_session(res)
+    session.store_session(res)
   end
 
   # Populate the response with content.
@@ -38,7 +40,7 @@ class ControllerBase
     @already_built_response = true
     res.body = [content]
     res['Content-Type'] = content_type
-    @session.store_session(res)
+    session.store_session(res)
   end
 
   # use ERB and binding to evaluate templates
@@ -61,6 +63,6 @@ class ControllerBase
 
   # use this with the router to call action_name (:index, :show, :create...)
   def invoke_action(name)
-    render.send(name)
+    render.send(name) unless already_built_response?
   end
 end
